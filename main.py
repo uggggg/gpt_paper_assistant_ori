@@ -193,7 +193,7 @@ if __name__ == "__main__":
         )
     openai_client = OpenAI(
         api_key=OAI_KEY,
-        base_url="https://api.deepseek.ai/v1"  # 替换为 DeepSeek 的 API 基础 URL
+        base_url="https://api.deepseek.com/v1"  # 替换为 DeepSeek 的 API 基础 URL
     )
     # load the author list
     with io.open("configs/authors.txt", "r") as fopen:
