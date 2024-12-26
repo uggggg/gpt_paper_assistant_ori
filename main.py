@@ -191,7 +191,10 @@ if __name__ == "__main__":
         raise ValueError(
             "OpenAI key is not set - please set OAI_KEY to your OpenAI key"
         )
-    openai_client = OpenAI(api_key=OAI_KEY)
+    openai_client = OpenAI(
+        api_key=OAI_KEY,
+        api_base="https://api.deepseek.ai/v1"  # 替换为 DeepSeek 的 API 基础 URL
+    )
     # load the author list
     with io.open("configs/authors.txt", "r") as fopen:
         author_names, author_ids = parse_authors(fopen.readlines())
