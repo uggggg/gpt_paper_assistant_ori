@@ -243,7 +243,10 @@ if __name__ == "__main__":
     keyconfig = configparser.ConfigParser()
     keyconfig.read("configs/keys.ini")
     S2_API_KEY = keyconfig["KEYS"]["semanticscholar"]
-    openai_client = OpenAI(api_key=keyconfig["KEYS"]["openai"])
+    openai_client = OpenAI(
+        api_key=keyconfig["KEYS"]["openai"],
+        api_base="https://api.deepseek.ai/v1"  # 指定 DeepSeek 的 API URL
+    )
     # deal with config parsing
     with open("configs/base_prompt.txt", "r") as f:
         base_prompt = f.read()
