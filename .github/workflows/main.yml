@@ -3,62 +3,72 @@ name: Deploy static content to Pages
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["main"]
+    branches:
+      - "main"  # Notice the list format here, using '-' for each branch
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: read   # Grants read access to repository contents
+  pages: write     # Grants write access to GitHub Pages
+  id-token: write  # Grants write access to id-token for authentication
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: "pages"  # Ensures that only one deployment is running at a time
+  cancel-in-progress: false  # Ensures the current job will not be canceled if a new one is triggered
 
 jobs:
   deploy:
+    # Define the environment for deployment (GitHub Pages)
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+
+    # The job runs on the latest Ubuntu environment
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout the repository
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4  # Checks out the repository so that the workflow can access its contents
 
+      # Step 2: Set up Python environment
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.10'  # Replace with your desired Python version
 
+      # Step 3: Install dependencies from requirements.txt (if Python project)
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip  # Upgrades pip to the latest version
+          pip install -r requirements.txt     # Installs the dependencies listed in the requirements.txt file
 
+      # Step 4: Set environment variables (use secrets for sensitive data)
       - name: Set environment variables
-        run: echo "OAI_KEY=${{ secrets.OAI_KEY }}" >> $GITHUB_ENV
+        run: echo "OAI_KEY=${{ secrets.OAI_KEY }}" >> $GITHUB_ENV  # Adds secret OAI_KEY to the GitHub environment
 
+      # Step 5: Run your main program to generate output
       - name: Run main program to generate output
         run: |
-          python main.py
-          
-      - name: List output files
-        run: ls -alh ./out  # Verifies that the expected files are present
+          python main.py  # Replace this with the actual command to run your program, if necessary
 
+      # Step 6: List the files generated in the 'out' folder
+      - name: List output files
+        run: ls -alh ./out  # Verifies that the expected output files are generated in the 'out' folder
+
+      # Step 7: Upload the generated output as an artifact to GitHub Pages
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './out'
+          path: './out'  # Specifies the directory containing the output files to be uploaded
 
+      # Step 8: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v4  # This action deploys the artifact to GitHub Pages
 
+      # Step 9: Verify Pages deployment and output the deployment URL
       - name: Verify Pages deployment
-        run: echo "Deployment URL: ${{ steps.deployment.outputs.page_url }}"
-
-
-
+        run: |
+          echo "Deployment URL: https://<your-username>.github.io/<repository-name>/"  # Prints the deployment URL
