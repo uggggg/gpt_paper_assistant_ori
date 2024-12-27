@@ -232,39 +232,72 @@ def get_papers_from_arxiv_api(area: str, timestamp, last_id) -> List[Paper]:
     return api_papers
 
 
-def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> List[Paper]:
-    url = f'https://arxiv.org/list/{area}/recent'
-    response = requests.get(url)
+def get_papers_from_arxiv_request(area: str, config: Optional[dict]) -> List[Paper]:
+    # Using requests and BeautifulSoup to scrape the ArXiv page directly
+    updated = datetime.utcnow() - timedelta(days=1)
+    updated_string = updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
+    url = f"https://arxiv.org/list/{area}/new"
+    headers = {
+        'If-Modified-Since': updated_string
+    }
     
-    if response.status_code != 200:
-        print(f"Failed to retrieve the page. Status code: {response.status_code}")
+    # Send the GET request to the ArXiv page
+    response = requests.get(url, headers=headers)
+    print(f"Request Status: {response.status_code}")
+    
+    if response.status_code == 304:
+        if config is not None and config["OUTPUT"].get("debug_messages", "false").lower() == "true":
+            print("No new papers since " + updated_string + " for " + area)
         return [], None, None
-
+    
     soup = BeautifulSoup(response.text, 'html.parser')
+    
+    # Extract paper entries from the page
     entries = soup.find_all('div', class_='list-title')
+    if len(entries) == 0:
+        print("No entries found for " + area)
+        return [], None, None
+    
+    last_id = entries[0].find('a')['href'].split("/")[-1]
+    
+    # Parse the 'updated' timestamp from the page (if available)
+    timestamp = None
+    try:
+        timestamp_str = soup.find('updated').get_text()
+        timestamp = datetime.strptime(timestamp_str, "%a, %d %b %Y %H:%M:%S +0000")
+        print(f"Parsed timestamp: {timestamp}")
+    except Exception as e:
+        print(f"Error parsing timestamp: {e}")
 
     paper_list = []
+    
     for entry in entries:
         title = entry.get_text(strip=True)
+        link = entry.find('a')['href']
+        arxiv_id = link.split("/")[-1]
 
-        # Try to find the arXiv ID by looking for 'a' tag with title attribute
-        arxiv_id_tag = entry.find('a', title=True)
-        if arxiv_id_tag:
-            arxiv_id = arxiv_id_tag['title'].split()[0]  # Extract arXiv ID from the title attribute
-        else:
-            arxiv_id = "Unknown"  # Fallback if no arXiv ID is found
+        # Skip papers that are already added
+        if arxiv_id == last_id:
+            continue
+        
+        # Fetching the paper's detailed information like authors and abstract (if available)
+        paper_details_url = f"https://arxiv.org/abs/{arxiv_id}"
+        paper_details_response = requests.get(paper_details_url)
+        paper_details_soup = BeautifulSoup(paper_details_response.text, 'html.parser')
+        
+        authors = [author.get_text(strip=True) for author in paper_details_soup.find_all('a', title="Show all authors")]
+        abstract = paper_details_soup.find('blockquote', class_='abstract').get_text(strip=True)
 
-        authors = ["Unknown"]  # Placeholder, as authors aren't scraped here
-        abstract = "No abstract available"  # Placeholder, as abstract isn't scraped here
-
-        paper = Paper(authors=authors, title=title, abstract=abstract, arxiv_id=arxiv_id)
-        paper_list.append(paper)
-
-    last_id = paper_list[0].arxiv_id if paper_list else None
-    timestamp = datetime.utcnow()  # Placeholder timestamp
+        # Create the Paper object
+        new_paper = Paper(
+            authors=authors,
+            title=title,
+            abstract=abstract,
+            arxiv_id=arxiv_id
+        )
+        paper_list.append(new_paper)
 
     return paper_list, timestamp, last_id
-
 
 
 def merge_paper_list(paper_list, api_paper_list):
@@ -277,19 +310,23 @@ def merge_paper_list(paper_list, api_paper_list):
 
 
 def get_papers_from_arxiv_rss_api(area: str, config: Optional[dict]) -> List[Paper]:
-    paper_list, timestamp, last_id = get_papers_from_arxiv_rss(area, config)
+    paper_list, timestamp, last_id = get_papers_from_arxiv_request(area, config)
     return paper_list
 
 
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read("configs/config.ini")
-    
-    # Get papers using the new scraping method
-    paper_list = get_papers_from_arxiv_rss_api("cs.AI", config)
-    
-    # Print out the arxiv_id of each paper
+
+    paper_list, timestamp, last_id = get_papers_from_arxiv_rss_api("cs.CL", config)
+    print(timestamp)
+
+    api_paper_list = get_papers_from_arxiv_api("cs.CL", timestamp, last_id)
+    merged_paper_list = merge_paper_list(paper_list, api_paper_list)
+
+    print([paper.arxiv_id for paper in merged_paper_list])
     print([paper.arxiv_id for paper in paper_list])
+    print([paper.arxiv_id for paper in api_paper_list])
     print("success")
 
 
