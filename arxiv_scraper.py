@@ -233,7 +233,6 @@ def get_papers_from_arxiv_api(area: str, timestamp, last_id) -> List[Paper]:
 
 
 def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> List[Paper]:
-    # Use requests + BeautifulSoup to scrape arxiv page
     url = f'https://arxiv.org/list/{area}/recent'
     response = requests.get(url)
     
@@ -244,29 +243,28 @@ def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> List[Paper]:
     soup = BeautifulSoup(response.text, 'html.parser')
     entries = soup.find_all('div', class_='list-title')
 
-    # Initialize a list to store the papers
     paper_list = []
     for entry in entries:
         title = entry.get_text(strip=True)
-        
-        # Extract arXiv ID (example: "arXiv:xxxx.xxxxxvX")
-        arxiv_id = entry.find('a', title=True)['title'].split()[0]
-        
-        # As we are scraping the arxiv page, we don't have authors and abstract.
-        # If desired, this could be scraped as well, but it's currently omitted.
+
+        # Try to find the arXiv ID by looking for 'a' tag with title attribute
+        arxiv_id_tag = entry.find('a', title=True)
+        if arxiv_id_tag:
+            arxiv_id = arxiv_id_tag['title'].split()[0]  # Extract arXiv ID from the title attribute
+        else:
+            arxiv_id = "Unknown"  # Fallback if no arXiv ID is found
+
         authors = ["Unknown"]  # Placeholder, as authors aren't scraped here
         abstract = "No abstract available"  # Placeholder, as abstract isn't scraped here
 
         paper = Paper(authors=authors, title=title, abstract=abstract, arxiv_id=arxiv_id)
         paper_list.append(paper)
 
-    # Here we simulate that the last ID is the first ID in the list
     last_id = paper_list[0].arxiv_id if paper_list else None
-
-    # Assuming timestamp is the current UTC time as a placeholder
-    timestamp = datetime.utcnow()
+    timestamp = datetime.utcnow()  # Placeholder timestamp
 
     return paper_list, timestamp, last_id
+
 
 
 def merge_paper_list(paper_list, api_paper_list):
