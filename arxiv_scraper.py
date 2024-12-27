@@ -39,8 +39,6 @@ def is_earlier(ts1, ts2):
 def get_papers_from_arxiv_api(area: str, timestamp, last_id) -> List[Paper]:
     # look for papers that are newer than the newest papers in RSS.
     # we do this by looking at last_id and grabbing everything newer.
-    if timestamp is None:
-        raise ValueError("Timestamp 为 None，无法从 feed 中解析 updated 字段。")
     end_date = timestamp
     start_date = timestamp - timedelta(days=4)
     search = arxiv.Search(
@@ -92,11 +90,7 @@ def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> List[Paper]:
         return [], None, None
     last_id = feed.entries[0].link.split("/")[-1]
     # parse last modified date
-    timestamp_str = feed.feed.get("updated", None)
-    if timestamp_str is None:
-        raise ValueError("feed 中未找到 'updated' 字段。")
-    
-    timestamp = datetime.strptime(timestamp_str, "%a, %d %b %Y %H:%M:%S +0000")
+    timestamp = datetime.strptime(feed.feed["updated"], "%a, %d %b %Y %H:%M:%S +0000")
     paper_list = []
     for paper in entries:
         # ignore updated papers
@@ -117,7 +111,7 @@ def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> List[Paper]:
         summary = re.sub("<[^<]+?>", "", paper.summary)
         summary = unescape(re.sub("\n", " ", summary))
         # strip the last pair of parentehses containing (arXiv:xxxx.xxxxx [area.XX])
-        title = re.sub(r"\(arXiv:[0-9]+\.[0-9]+v[0-9]+ \[.*\]\)$", "", paper.title)
+        title = re.sub("\(arXiv:[0-9]+\.[0-9]+v[0-9]+ \[.*\]\)$", "", paper.title)
         # remove the link part of the id
         id = paper.link.split("/")[-1]
         # make a new paper
