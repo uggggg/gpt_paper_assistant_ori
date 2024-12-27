@@ -5,6 +5,7 @@ import re
 from typing import List
 
 import retry
+import openai
 from openai import OpenAI
 from tqdm import tqdm
 
@@ -237,13 +238,16 @@ def filter_by_gpt(
 
 
 if __name__ == "__main__":
+    openai.api_key = "sk-13408f0696b849788133b2f892ce17c6"
+    openai.api_base = "https://api.deepseek.com"  # 设置 DeepSeek 的 base_url
     config = configparser.ConfigParser()
     config.read("configs/config.ini")
     # now load the api keys
     keyconfig = configparser.ConfigParser()
     keyconfig.read("configs/keys.ini")
     S2_API_KEY = keyconfig["KEYS"]["semanticscholar"]
-    openai_client = OpenAI(api_key="sk-13408f0696b849788133b2f892ce17c6", base_url="https://api.deepseek.com")
+    #openai_client = OpenAI(api_key="sk-13408f0696b849788133b2f892ce17c6", base_url="https://api.deepseek.com")
+    openai_client = openai
     # deal with config parsing
     with open("configs/base_prompt.txt", "r") as f:
         base_prompt = f.read()
