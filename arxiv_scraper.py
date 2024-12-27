@@ -78,6 +78,9 @@ def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> List[Paper]:
     feed = feedparser.parse(
         f"http://export.arxiv.org/rss/{area}", modified=updated_string
     )
+    print(f"Feed Status: {feed.status}")
+    print(f"Feed entries count: {len(feed.entries)}")
+    print(f"Feed content: {feed.feed}")
     if feed.status == 304:
         if (config is not None) and config["OUTPUT"]["debug_messages"]:
             print("No new papers since " + updated_string + " for " + area)
@@ -89,8 +92,17 @@ def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> List[Paper]:
         print("No entries found for " + area)
         return [], None, None
     last_id = feed.entries[0].link.split("/")[-1]
+
+    # Check and print the 'updated' field before parsing
+    print(f"Updated field from feed: {feed.feed.get('updated', 'No updated field found')}")
+    
     # parse last modified date
-    timestamp = datetime.strptime(feed.feed["updated"], "%a, %d %b %Y %H:%M:%S +0000")
+    try:
+        timestamp = datetime.strptime(feed.feed["updated"], "%a, %d %b %Y %H:%M:%S +0000")
+        print(f"Parsed timestamp: {timestamp}")
+    except Exception as e:
+        print(f"Error parsing timestamp: {e}")
+        timestamp = None
     paper_list = []
     for paper in entries:
         # ignore updated papers
