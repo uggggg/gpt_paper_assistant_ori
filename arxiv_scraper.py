@@ -92,7 +92,11 @@ def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> List[Paper]:
         return [], None, None
     last_id = feed.entries[0].link.split("/")[-1]
     # parse last modified date
-    timestamp = datetime.strptime(feed.feed["updated"], "%a, %d %b %Y %H:%M:%S +0000")
+    timestamp_str = feed.feed.get("updated", None)
+    if timestamp_str is None:
+        raise ValueError("feed 中未找到 'updated' 字段。")
+    
+    timestamp = datetime.strptime(timestamp_str, "%a, %d %b %Y %H:%M:%S +0000")
     paper_list = []
     for paper in entries:
         # ignore updated papers
