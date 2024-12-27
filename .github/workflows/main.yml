@@ -25,40 +25,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Set up Python (if it's a Python project)
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'  # Replace with the version of Python you're using
+          python-version: '3.10'
 
-      # Step 3: Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt  # Adjust this command based on your project dependencies
+          pip install -r requirements.txt
 
-      # Step 4: Set environment variables (use secrets for sensitive data)
       - name: Set environment variables
         run: echo "OAI_KEY=${{ secrets.OAI_KEY }}" >> $GITHUB_ENV
 
-      # Step 5: Run your main program to generate output
       - name: Run main program to generate output
         run: |
-          python main.py  # Replace this with the actual command to run your main program
+          python main.py
+          
+      - name: List output files
+        run: ls -alh ./out  # Verifies that the expected files are present
 
-      # Step 6: Upload the generated content (e.g., 'out' folder) to GitHub Pages
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './out'  # Ensure the output is in the 'out' folder
+          path: './out'
 
-      # Step 7: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify Pages deployment
+        run: echo "Deployment URL: ${{ steps.deployment.outputs.page_url }}"
+
 
 
