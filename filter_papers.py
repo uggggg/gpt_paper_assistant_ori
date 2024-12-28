@@ -7,6 +7,7 @@ from typing import List
 import retry
 import openai
 from openai import OpenAI
+import openai
 from tqdm import tqdm
 
 from arxiv_scraper import Paper
