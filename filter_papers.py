@@ -6,6 +6,7 @@ from typing import List
 
 import retry
 import openai
+print(openai.__version__)
 from openai import OpenAI
 import openai
 from tqdm import tqdm
