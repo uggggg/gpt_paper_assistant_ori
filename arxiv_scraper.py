@@ -6,10 +6,12 @@ from html import unescape
 from typing import List, Optional, Tuple
 import re
 import arxiv
+
 import feedparser
 from dataclasses import dataclass
 import logging
 import os
+
 
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -17,22 +19,24 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             return dataclasses.asdict(o)
         return super().default(o)
 
+
 @dataclass
 class Paper:
-    # 记录作者列表、论文标题、摘要、arxiv id 和分类
+    # 记录作者列表、论文标题、摘要、arxiv id
     authors: List[str]
     title: str
     abstract: str
     arxiv_id: str
-    categories: List[str]  # 添加分类字段
 
+    # 添加哈希函数以支持去重
     def __hash__(self):
         return hash(self.arxiv_id)
+
 
 def is_earlier(ts1: str, ts2: str) -> bool:
     """
     比较两个 arxiv_id，判断 ts1 是否早于 ts2。
-    arxiv_id 格式通常为 'XXXX.XXXXXvX'，我们通过去除点和版本号进行比较。
+    arxiv_id 格式通常为 'XXXX.XXXXXvX'，通过去除点和版本号进行比较。
     """
     try:
         id1_num = int(ts1.split('v')[0].replace('.', ''))
@@ -40,6 +44,7 @@ def is_earlier(ts1: str, ts2: str) -> bool:
         return id1_num < id2_num
     except:
         return False
+
 
 def get_papers_from_arxiv_api(area: str, timestamp: Optional[datetime], last_id: Optional[str]) -> List[Paper]:
     """
@@ -66,19 +71,17 @@ def get_papers_from_arxiv_api(area: str, timestamp: Optional[datetime], last_id:
         authors = [author.name for author in result.authors]
         summary = result.summary
         summary = unescape(re.sub("\n", " ", summary))
-        # 仅保留以 'cs.' 开头的分类
-        categories = [cat for cat in result.categories if cat.startswith('cs.')]
         # 确保论文属于所需的分类
-        if area in categories:
+        if area in result.categories:
             paper = Paper(
                 authors=authors,
                 title=result.title,
                 abstract=summary,
                 arxiv_id=new_id,
-                categories=categories
             )
             api_papers.append(paper)
     return api_papers
+
 
 def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> Tuple[List[Paper], Optional[datetime], Optional[str]]:
     """
@@ -93,7 +96,7 @@ def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> Tuple[List[P
     )
     logging.info(f"Feed Status: {feed.status}")
     logging.info(f"Feed entries count: {len(feed.entries)}")
-    
+
     if feed.status == 304:
         if config and config.get("OUTPUT", {}).get("debug_messages", False):
             logging.info(f"No new papers since {updated_string} for {area}")
@@ -143,19 +146,15 @@ def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> Tuple[List[P
         title = re.sub(r"\(arXiv:[0-9]+\.[0-9]+v[0-9]+ \[.*\]\)$", "", paper.title).strip()
         # 提取 arxiv_id
         id = paper.link.split("/")[-1]
-        # 提取分类，仅保留 'cs.' 开头的分类
-        categories = [
-            tag.term for tag in paper.tags
-            if tag.scheme == "http://arxiv.org/schemas/atom" and tag.term.startswith('cs.')
-        ]
         # 确保论文属于所需的分类
-        if area in categories:
-            new_paper = Paper(authors=authors, title=title, abstract=summary, arxiv_id=id, categories=categories)
+        if area in paper_area:
+            new_paper = Paper(authors=authors, title=title, abstract=summary, arxiv_id=id)
             paper_list.append(new_paper)
         else:
             logging.debug(f"Skipping paper {title} as it does not belong to {area}")
 
     return paper_list, timestamp, last_id
+
 
 def merge_paper_list(paper_list: List[Paper], api_paper_list: List[Paper]) -> List[Paper]:
     """
@@ -165,17 +164,16 @@ def merge_paper_list(paper_list: List[Paper], api_paper_list: List[Paper]) -> Li
     merged_paper_list = api_paper_list.copy()
     for paper in paper_list:
         if paper.arxiv_id not in api_set:
-            # 确保论文属于 'cs.AI' 或 'cs.LG'
-            if any(cat in ['cs.AI', 'cs.LG'] for cat in paper.categories):
-                merged_paper_list.append(paper)
+            merged_paper_list.append(paper)
     return merged_paper_list
+
 
 def get_papers_from_arxiv_rss_api(area: str, config: Optional[dict]) -> List[Paper]:
     """
     综合使用 RSS 和 API 获取指定分类的论文。
     """
     paper_list, timestamp, last_id = get_papers_from_arxiv_rss(area, config)
-    
+
     if len(paper_list) == 0:
         logging.info(f"Attempting to fetch papers from API for {area}...")
         api_paper_list = get_papers_from_arxiv_api(area, timestamp, last_id)
@@ -188,8 +186,9 @@ def get_papers_from_arxiv_rss_api(area: str, config: Optional[dict]) -> List[Pap
                 extended_timestamp = None
             api_paper_list = get_papers_from_arxiv_api(area, extended_timestamp, last_id)
         paper_list = api_paper_list
-    
+
     return paper_list
+
 
 def get_papers(config: dict) -> List[Paper]:
     """
@@ -202,44 +201,46 @@ def get_papers(config: dict) -> List[Paper]:
         all_papers.extend(papers)
     return all_papers
 
+
 def save_papers(papers: List[Paper], output_path: str):
     """
     将获取到的论文列表保存为 JSON 文件。
     """
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-    
+
     output_file = os.path.join(output_path, "papers.json")
     with open(output_file, "w", encoding='utf-8') as outfile:
         json.dump([dataclasses.asdict(paper) for paper in papers], outfile, indent=4, ensure_ascii=False, cls=EnhancedJSONEncoder)
 
+
 if __name__ == "__main__":
     # 配置日志
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    
+
     # 读取配置文件
     config = configparser.ConfigParser()
     config.read("configs/config.ini")
-    
+
     # 获取论文
     all_papers = get_papers(config)
-    
+
     # 保存到文件
     save_papers(all_papers, "./output/")
-    
+
     # 打印摘要信息
     print(f"Fetched {len(all_papers)} papers.")
-    
+
     if len(all_papers) > 0:
         # 收集所有分类
         all_categories = set()
         for paper in all_papers:
-            all_categories.update(paper.categories)
-        print("Fetched papers belong to the following categories:")
-        for category in sorted(all_categories):
-            print(f"- {category}")
-        
-        # 打印前十篇论文的标题
+            # 由于原始Paper类没有categories字段，这里只能根据area_list推断
+            # 如果需要更精确的分类，请考虑在Paper类中添加categories字段
+            pass  # 跳过分类收集，因为原始Paper没有分类信息
+
+        # 如果您需要打印分类信息，建议在Paper类中添加categories字段
+        # 此处仅打印前十篇论文的标题
         print("\nTitles of the first ten papers:")
         for idx, paper in enumerate(all_papers[:10], 1):
             print(f"{idx}. {paper.title}")
