@@ -6,19 +6,16 @@ from html import unescape
 from typing import List, Optional, Tuple
 import re
 import arxiv
-
 import feedparser
 from dataclasses import dataclass
 import logging
 import os
-
 
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
         return super().default(o)
-
 
 @dataclass
 class Paper:
@@ -32,7 +29,6 @@ class Paper:
     def __hash__(self):
         return hash(self.arxiv_id)
 
-
 def is_earlier(ts1: str, ts2: str) -> bool:
     """
     比较两个 arxiv_id，判断 ts1 是否早于 ts2。
@@ -44,7 +40,6 @@ def is_earlier(ts1: str, ts2: str) -> bool:
         return id1_num < id2_num
     except:
         return False
-
 
 def get_papers_from_arxiv_api(area: str, timestamp: Optional[datetime], last_id: Optional[str]) -> List[Paper]:
     """
@@ -84,7 +79,6 @@ def get_papers_from_arxiv_api(area: str, timestamp: Optional[datetime], last_id:
             )
             api_papers.append(paper)
     return api_papers
-
 
 def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> Tuple[List[Paper], Optional[datetime], Optional[str]]:
     """
@@ -163,7 +157,6 @@ def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> Tuple[List[P
 
     return paper_list, timestamp, last_id
 
-
 def merge_paper_list(paper_list: List[Paper], api_paper_list: List[Paper]) -> List[Paper]:
     """
     合并 RSS 和 API 获取的论文列表，去除重复项。
@@ -176,7 +169,6 @@ def merge_paper_list(paper_list: List[Paper], api_paper_list: List[Paper]) -> Li
             if any(cat in ['cs.AI', 'cs.LG'] for cat in paper.categories):
                 merged_paper_list.append(paper)
     return merged_paper_list
-
 
 def get_papers_from_arxiv_rss_api(area: str, config: Optional[dict]) -> List[Paper]:
     """
@@ -199,7 +191,6 @@ def get_papers_from_arxiv_rss_api(area: str, config: Optional[dict]) -> List[Pap
     
     return paper_list
 
-
 def get_papers(config: dict) -> List[Paper]:
     """
     获取所有指定分类的论文。
@@ -211,7 +202,6 @@ def get_papers(config: dict) -> List[Paper]:
         all_papers.extend(papers)
     return all_papers
 
-
 def save_papers(papers: List[Paper], output_path: str):
     """
     将获取到的论文列表保存为 JSON 文件。
@@ -222,7 +212,6 @@ def save_papers(papers: List[Paper], output_path: str):
     output_file = os.path.join(output_path, "papers.json")
     with open(output_file, "w", encoding='utf-8') as outfile:
         json.dump([dataclasses.asdict(paper) for paper in papers], outfile, indent=4, ensure_ascii=False, cls=EnhancedJSONEncoder)
-
 
 if __name__ == "__main__":
     # 配置日志
@@ -256,7 +245,6 @@ if __name__ == "__main__":
             print(f"{idx}. {paper.title}")
     else:
         print("No papers fetched.")
-
 
 
 
