@@ -131,9 +131,13 @@ def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> Tuple[List[P
         # 提取分类
         paper_area = paper.tags[0].term if 'tags' in paper and len(paper.tags) > 0 else ""
         # 根据配置过滤非主分类的论文
-        if (area != paper_area) and (config and config.get("FILTERING", {}).getboolean("force_primary", False)):
-            logging.info(f"Ignoring {paper.title} as it belongs to {paper_area} instead of {area}")
-            continue
+        # if (area != paper_area) and (config and config.get("FILTERING", {}).getboolean("force_primary", False)):
+        #     logging.info(f"Ignoring {paper.title} as it belongs to {paper_area} instead of {area}")
+        #     continue
+        if not set(area.split(',')).intersection(set(paper_area.split(','))):
+            if config and config.get("FILTERING", {}).getboolean("force_primary", False):
+                logging.info(f"Ignoring {paper.title} as it belongs to {paper_area} instead of {area}")
+                continue
         # 提取作者，去除 HTML 标签
         authors = [
             unescape(re.sub("<[^<]+?>", "", author)).strip()
