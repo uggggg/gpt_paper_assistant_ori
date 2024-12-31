@@ -134,16 +134,16 @@ def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> Tuple[List[P
         # if (area != paper_area) and (config and config.get("FILTERING", {}).getboolean("force_primary", False)):
         #     logging.info(f"Ignoring {paper.title} as it belongs to {paper_area} instead of {area}")
         #     continue
-        if area != paper_area:
-            # 获取 'force_primary' 配置项，处理为布尔值
-            force_primary_value = config.get("FILTERING", {}).get("force_primary", "false").strip().lower()
-            
-            # 判断 force_primary 是否为 "true"
-            force_primary = force_primary_value == "true"
-            
-            if force_primary:
-                logging.info(f"Ignoring {paper.title} as it belongs to {paper_area} instead of {area}")
-                continue
+        # 获取 force_primary 配置项，处理为布尔值
+        force_primary_value = config.get("FILTERING", "force_primary", fallback="false").strip().lower()
+        
+        # 判断 force_primary 是否为 "true"
+        force_primary = force_primary_value == "true"
+        
+        # 如果是 force_primary 且区域不同，则跳过当前论文
+        if area != paper_area and force_primary:
+            logging.info(f"Ignoring {paper.title} as it belongs to {paper_area} instead of {area}")
+            continue
         # 提取作者，去除 HTML 标签
         authors = [
             unescape(re.sub("<[^<]+?>", "", author)).strip()
