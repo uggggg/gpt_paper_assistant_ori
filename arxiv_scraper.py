@@ -134,8 +134,11 @@ def get_papers_from_arxiv_rss(area: str, config: Optional[dict]) -> Tuple[List[P
         # if (area != paper_area) and (config and config.get("FILTERING", {}).getboolean("force_primary", False)):
         #     logging.info(f"Ignoring {paper.title} as it belongs to {paper_area} instead of {area}")
         #     continue
-        if not set(area.split(',')).intersection(set(paper_area.split(','))):
-            if config and config.get("FILTERING", {}).getboolean("force_primary", False):
+        if area != paper_area:
+            # 获取配置项 force_primary，处理为布尔值
+            force_primary = config.get("FILTERING", {}).get("force_primary", "false").strip().lower() == "true"
+            
+            if force_primary:
                 logging.info(f"Ignoring {paper.title} as it belongs to {paper_area} instead of {area}")
                 continue
         # 提取作者，去除 HTML 标签
