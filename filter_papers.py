@@ -240,7 +240,13 @@ def filter_by_gpt(
 
 
 if __name__ == "__main__":
-    client = OpenAI(api_key="sk-13408f0696b849788133b2f892ce17c6", base_url="https://api.deepseek.com")
+    OAI_KEY = os.environ.get("OAI_KEY")
+    if OAI_KEY is None:
+        raise ValueError(
+            "OpenAI key is not set - please set OAI_KEY to your OpenAI key"
+        )
+        
+    client = OpenAI(api_key=OAI_KEY, base_url="https://api.deepseek.com")
     
     response = client.chat.completions.create(
         model="deepseek-chat",
@@ -254,15 +260,13 @@ if __name__ == "__main__":
     )
     
     print(response.choices[0].message.content)
-    #openai.api_key = "sk-13408f0696b849788133b2f892ce17c6"
-    #openai.api_base = "https://api.deepseek.com"  # 设置 DeepSeek 的 base_url
     config = configparser.ConfigParser()
     config.read("configs/config.ini")
     # now load the api keys
     keyconfig = configparser.ConfigParser()
     keyconfig.read("configs/keys.ini")
     #S2_API_KEY = keyconfig["KEYS"]["semanticscholar"]
-    openai_client = OpenAI(api_key="sk-13408f0696b849788133b2f892ce17c6", base_url="https://api.deepseek.com")
+    openai_client = OpenAI(api_key=OAI_KEY, base_url="https://api.deepseek.com")
     #openai_client = openai
     # deal with config parsing
     with open("configs/base_prompt.txt", "r") as f:
