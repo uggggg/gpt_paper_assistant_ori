@@ -184,8 +184,6 @@ def parse_authors(lines):
 if __name__ == "__main__":
     # now load config.ini
     # 设置 OpenAI API 密钥和 DeepSeek base_url
-    #openai.api_key = "sk-13408f0696b849788133b2f892ce17c6"
-    #openai.api_base = "https://api.deepseek.com"  # 设置 DeepSeek 的 base_url
     
     config = configparser.ConfigParser()
     config.read("configs/config.ini")
@@ -196,7 +194,7 @@ if __name__ == "__main__":
         raise ValueError(
             "OpenAI key is not set - please set OAI_KEY to your OpenAI key"
         )
-    openai_client = OpenAI(api_key="sk-13408f0696b849788133b2f892ce17c6", base_url="https://api.deepseek.com")
+    openai_client = OpenAI(api_key=OAI_KEY, base_url="https://api.deepseek.com")
     #openai_client = openai
     # load the author list
     with io.open("configs/authors.txt", "r") as fopen:
