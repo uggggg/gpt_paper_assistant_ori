@@ -181,6 +181,30 @@ def parse_authors(lines):
     return authors, author_ids
 
 
+def translate_to_chinese_via_deepseek(text: str, client: OpenAI) -> str:
+    """
+    使用 DeepSeek API 将英文文本翻译成中文
+    """
+    try:
+        # 使用 DeepSeek API 的 chat.completions.create 方法
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that translates English text to Chinese."},
+                {"role": "user", "content": f"Translate the following text to Chinese:\n\n{text}"},
+            ],
+            stream=False,
+            temperature=0,
+            seed=0
+        )
+        # 获取返回的翻译文本
+        translated_text = response.choices[0].message['content'].strip()
+        return translated_text
+    except Exception as e:
+        print(f"翻译失败: {e}")
+        return text
+
+
 if __name__ == "__main__":
     # now load config.ini
     # 设置 OpenAI API 密钥和 DeepSeek base_url
@@ -238,6 +262,14 @@ if __name__ == "__main__":
         sort_dict,
     )
 
+    #增加翻译成中文的模块
+    # 对筛选出的论文标题和摘要进行翻译
+    for paper_id, paper in selected_papers.items():
+        print(f"Translating paper: {paper['title']}")
+        paper['title_cn'] = translate_to_chinese_via_deepseek(paper['title'], openai_client)
+        paper['abstract_cn'] = translate_to_chinese_via_deepseek(paper['abstract'], openai_client)
+    
+
     # sort the papers by relevance and novelty
     keys = list(sort_dict.keys())
     values = list(sort_dict.values())
@@ -255,6 +287,12 @@ if __name__ == "__main__":
         if config["OUTPUT"].getboolean("dump_md"):
             with open(config["OUTPUT"]["output_path"] + "output.md", "w") as f:
                 f.write(render_md_string(selected_papers))
+            # 生成包含中文翻译的 Markdown 文件
+            with open(config["OUTPUT"]["output_path"] + "output_translated.md", "w") as f:
+                for paper_id, paper in selected_papers.items():
+                    f.write(f"## {paper['title_cn']}\n\n")
+                    f.write(f"{paper['abstract_cn']}\n\n")
+
         # only push to slack for non-empty dicts
         if config["OUTPUT"].getboolean("push_to_slack"):
             SLACK_KEY = os.environ.get("SLACK_KEY")
