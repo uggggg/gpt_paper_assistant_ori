@@ -1,16 +1,16 @@
-# GPT4 paper assistant: A daily ArXiv scanner
+# GPT4（Deepseek v3） paper assistant: A daily ArXiv scanner
 
 This repo implements a very simple daily scanner for Arxiv that uses GPT4 and author matches to find papers you might find interesting. 
 It will run daily via github actions and can post this information to slack via a bot or just render it in a static github-pages website.
 
 A simple demo of the daily papers can be seen [here](https://tatsu-lab.github.io/gpt_paper_assistant/) running on `cs.CL`
 
-As a cost estimate, running this on all of `cs.CL` cost $0.07 on 2/7/2024
+As a cost estimate, running this on all of `cs.CL` cost $0.07 on 2/7/2024(on GPT4) and ¥0.02 on 1/6/2025(on Deepseek v3) 
 
 ## Changelog
 - **2/15/2024**: fixed a bug with author parsing in the RSS format + cost estimates for title filtering being off + crash when 0 papers are on the feed. 
 - **2/7/2024**: fixed a critical issue from ArXiv changing their RSS format. Added and enabled a title filtering to reduce costs.
-
+- **1/6/2025**: fixed arxiv api. Changing api from gpt4 to deepseek v3.
 
 ## Quickstart
 This is the minimal necessary steps to get the scanner to run. It is highly recommended to read the whole thing to decide what you want to run.
@@ -21,8 +21,8 @@ This is the minimal necessary steps to get the scanner to run. It is highly reco
 2. Copy `config/paper_topics.template.txt` to `config/paper_topics.txt` and fill it out with the types of papers you want to follow
 3. Copy `config/authors.template.txt` to `config/authors.txt` and list the authors you actually want to follow. The numbers behind the author are important. They are semantic scholar author IDs which you can find by looking up the authors on semantic scholar and taking the numbers at the end of the URL.
 4. Set your desired ArXiv categories in `config/config.ini`.
-5. Set your openai key (`OAI_KEY`) as ``a [github secret](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository)
-6. In your repo settings, set github page build sources to be [github actions](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow)
+5. Set your openai key(deepseek key) (`OAI_KEY`) as ``a [github secret](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository)
+6. If you folk the programme, you need to copy my workflow in actions to your programme and run the two actions. In your repo settings, set github page build sources to be [github actions](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow)
 
 At this point your bot should run daily and publish a static website. You can test this by running the github action workflow manually.
 
