@@ -40,6 +40,12 @@ jobs:
       with:
         files: output.md,output_translated.md
 
+    # 确保 dist 目录存在并清理
+    - name: Clean dist directory
+      run: |
+        rm -rf dist || true  # 删除已存在的 dist 目录
+        mkdir -p dist  # 确保 dist 目录存在
+
     # 转换英文版本的 output.md 为网页
     - name: Convert English version to pages
       uses: wranders/markdown-to-pages-action@v0.1
@@ -48,7 +54,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         file: output.md
         out-path: dist
-        out-path-not-empty: true  # 允许目标目录存在并非空
+        out-path-not-empty: true
 
     # 转换中文版本的 output_translated.md 为网页
     - name: Convert Chinese version to pages
@@ -57,8 +63,8 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         file: output_translated.md
-        out-path: dist/translated  # 使用不同的子目录
-        out-path-not-empty: true  # 允许目标目录存在并非空
+        out-path: dist/translated
+        out-path-not-empty: true
 
     # 生成导航首页 index.md
     - name: Generate navigation index
