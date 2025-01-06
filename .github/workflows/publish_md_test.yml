@@ -40,11 +40,11 @@ jobs:
       with:
         files: output.md,output_translated.md
 
-    # 确保 dist 目录存在并清理
-    - name: Clean dist directory
+    # 确保 dist 目录存在
+    - name: Ensure dist directory exists
       run: |
-        rm -rf dist || true  # 删除已存在的 dist 目录
         mkdir -p dist  # 确保 dist 目录存在
+        mkdir -p dist/translated  # 为中文版本确保 translated 子目录存在
 
     # 转换英文版本的 output.md 为网页
     - name: Convert English version to pages
@@ -86,4 +86,5 @@ jobs:
     - uses: actions/deploy-pages@v1
       if: steps.check_files.outputs.files_exists == 'true'
       id: deployment
+
 
