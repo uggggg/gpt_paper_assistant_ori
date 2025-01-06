@@ -56,7 +56,8 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         file: output_translated.md
-        output_path: dist
+        output_path: dist/translated
+
 
     # 生成导航首页 index.md
     - name: Generate navigation index
