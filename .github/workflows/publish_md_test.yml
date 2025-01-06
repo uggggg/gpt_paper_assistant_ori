@@ -80,22 +80,11 @@ jobs:
           echo "    <h1>GPT Paper Assistant</h1>" >> dist/index.html
           echo "    <p>Welcome to the Arxiv Paper Assistant! Please select a language:</p>" >> dist/index.html
           echo "    <ul>" >> dist/index.html
-          echo "        <li><a href=\"./en/\">English Version</a></li>" >> dist/index.html
-          echo "        <li><a href=\"./zh/\">中文版本</a></li>" >> dist/index.html
+          echo "        <li><a href=\"./en\">English Version</a></li>" >> dist/index.html
+          echo "        <li><a href=\"./zh\">中文版本</a></li>" >> dist/index.html
           echo "    </ul>" >> dist/index.html
           echo "</body>" >> dist/index.html
           echo "</html>" >> dist/index.html
-
-      # 为英文和中文版本生成各自的 index.html
-      - name: Rename output.html to index.html for English
-        if: steps.check_files.outputs.files_exists == 'true'
-        run: |
-          mv dist/en/output.html dist/en/index.html
-
-      - name: Rename output_translated.html to index.html for Chinese
-        if: steps.check_files.outputs.files_exists == 'true'
-        run: |
-          mv dist/zh/output_translated.html dist/zh/index.html
 
       # 上传静态网页文件作为 GitHub Pages 的 artifact
       - name: Upload Pages artifact
