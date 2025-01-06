@@ -40,11 +40,11 @@ jobs:
       with:
         files: output.md,output_translated.md
 
-    # 确保 dist 目录存在
-    - name: Ensure dist directory exists
+    # 确保 dist 和 dist2 目录存在
+    - name: Ensure dist and dist2 directories exist
       run: |
         mkdir -p dist  # 确保 dist 目录存在
-        mkdir -p dist/translated  # 为中文版本确保 translated 子目录存在
+        mkdir -p dist2  # 确保 dist2 目录存在
 
     # 转换英文版本的 output.md 为网页
     - name: Convert English version to pages
@@ -63,7 +63,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         file: output_translated.md
-        out-path: dist/translated
+        out-path: dist2
         out-path-not-empty: true
 
     # 生成导航首页 index.md
@@ -74,17 +74,32 @@ jobs:
         echo "Welcome to the Arxiv Paper Assistant! Please select a language:" >> dist/index.md
         echo "" >> dist/index.md
         echo "- [English Version](./output.html)" >> dist/index.md
-        echo "- [Chinese Version](./output_translated.html)" >> dist/index.md
+        echo "- [Chinese Version](./dist2/output_translated.html)" >> dist/index.md
 
     # 上传静态网页文件
-    - uses: actions/upload-pages-artifact@v2
+    - name: Upload English pages
+      uses: actions/upload-pages-artifact@v2
       if: steps.check_files.outputs.files_exists == 'true'
       with:
         path: dist
 
-    # 部署到 GitHub Pages
-    - uses: actions/deploy-pages@v1
+    - name: Upload Chinese pages
+      uses: actions/upload-pages-artifact@v2
       if: steps.check_files.outputs.files_exists == 'true'
-      id: deployment
+      with:
+        path: dist2
 
+    # 部署到 GitHub Pages
+    - name: Deploy English pages
+      uses: actions/deploy-pages@v1
+      if: steps.check_files.outputs.files_exists == 'true'
+      with:
+        path: dist
+
+    - name: Deploy Chinese pages
+      uses: actions/deploy-pages@v1
+      if: steps.check_files.outputs.files_exists == 'true'
+      with:
+        path: dist2
+      id: deployment
 
