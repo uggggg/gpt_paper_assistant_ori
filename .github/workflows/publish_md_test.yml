@@ -7,7 +7,6 @@ on:
     types:
       - completed
 
-
 permissions: write-all
 
 jobs:
@@ -17,9 +16,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     outputs:
-      file-exists: ${{steps.file-check.outputs.file_exists}}
+      file-exists: ${{ steps.file-check.outputs.file_exists }}
     steps:
     - uses: actions/checkout@v3
+    
+    # 下载生成的 Artifact
     - name: Download artifact
       id: download-artifact
       uses: dawidd6/action-download-artifact@v2
@@ -27,23 +28,43 @@ jobs:
         workflow: cron_runs.yaml
         workflow_conclusion: success
         name: arxiv-scanner-outputs
+    
+    # 显示下载的文件结构
     - name: Display structure of downloaded files
       run: ls -R
+    
+    # 检查 output.md 是否存在
     - name: Check for output.md
       id: check_files
       uses: andstor/file-existence-action@v2
       with:
-        files: output.md
-    - name: Convert output.md to pages
+        files: output.md,output_translated.md
+    
+    # 转换英文版本的 output.md 为网页
+    - name: Convert English version to pages
       uses: wranders/markdown-to-pages-action@v0.1
       if: steps.check_files.outputs.files_exists == 'true'
       with:
-       token: ${{ secrets.GITHUB_TOKEN }}
-       file: output.md
+        token: ${{ secrets.GITHUB_TOKEN }}
+        file: output.md
+        output_path: dist/english
+    
+    # 转换中文版本的 output_translated.md 为网页
+    - name: Convert Chinese version to pages
+      uses: wranders/markdown-to-pages-action@v0.1
+      if: steps.check_files.outputs.files_exists == 'true'
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        file: output_translated.md
+        output_path: dist/chinese
+    
+    # 上传静态网页文件
     - uses: actions/upload-pages-artifact@v2
       if: steps.check_files.outputs.files_exists == 'true'
       with:
         path: dist
+    
+    # 部署到 GitHub Pages
     - uses: actions/deploy-pages@v1
       if: steps.check_files.outputs.files_exists == 'true'
       id: deployment
