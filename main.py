@@ -194,7 +194,7 @@ def translate_to_chinese_via_deepseek(text: str, client: OpenAI) -> str:
                 {"role": "user", "content": f"Translate the following text to Chinese:\n\n{text}"},
             ],
             stream=False,
-            temperature=0,
+            temperature=1.0,
             seed=0
         )
         # 获取返回的翻译文本
