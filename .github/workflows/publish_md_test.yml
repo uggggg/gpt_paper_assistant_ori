@@ -19,7 +19,7 @@ jobs:
       file-exists: ${{ steps.file-check.outputs.file_exists }}
     steps:
     - uses: actions/checkout@v3
-    
+
     # 下载生成的 Artifact
     - name: Download artifact
       id: download-artifact
@@ -28,18 +28,18 @@ jobs:
         workflow: cron_runs.yaml
         workflow_conclusion: success
         name: arxiv-scanner-outputs
-    
+
     # 显示下载的文件结构
     - name: Display structure of downloaded files
       run: ls -R
-    
+
     # 检查 output.md 是否存在
     - name: Check for output.md
       id: check_files
       uses: andstor/file-existence-action@v2
       with:
         files: output.md,output_translated.md
-    
+
     # 转换英文版本的 output.md 为网页
     - name: Convert English version to pages
       uses: wranders/markdown-to-pages-action@v0.1
@@ -47,8 +47,8 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         file: output.md
-        output_path: dist/english
-    
+        output_path: dist
+
     # 转换中文版本的 output_translated.md 为网页
     - name: Convert Chinese version to pages
       uses: wranders/markdown-to-pages-action@v0.1
@@ -56,15 +56,26 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         file: output_translated.md
-        output_path: dist/chinese
-    
+        output_path: dist
+
+    # 生成导航首页 index.md
+    - name: Generate navigation index
+      run: |
+        echo "# GPT Paper Assistant" > dist/index.md
+        echo "" >> dist/index.md
+        echo "Welcome to the Arxiv Paper Assistant! Please select a language:" >> dist/index.md
+        echo "" >> dist/index.md
+        echo "- [English Version](./output.html)" >> dist/index.md
+        echo "- [Chinese Version](./output_translated.html)" >> dist/index.md
+
     # 上传静态网页文件
     - uses: actions/upload-pages-artifact@v2
       if: steps.check_files.outputs.files_exists == 'true'
       with:
         path: dist
-    
+
     # 部署到 GitHub Pages
     - uses: actions/deploy-pages@v1
       if: steps.check_files.outputs.files_exists == 'true'
       id: deployment
+
